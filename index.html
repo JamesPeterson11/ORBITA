@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OmniDash - Архитектура и Жизнь</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-color: #000000;
+            --bg-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop');
+            --text-main: #ffffff;
+            --text-muted: rgba(255, 255, 255, 0.65);
+            --glass-bg: rgba(25, 25, 28, 0.55);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
+            --accent: #0A84FF;
+            --accent-glass: rgba(10, 132, 255, 0.22);
+            --nav-bg: rgba(18, 18, 20, 0.85);
+        }
+
+        [data-theme="apple-light"] {
+            --bg-color: #f2f2f7;
+            --bg-image: url('https://images.unsplash.com/photo-1557682250-33bd709cbe85?q=80&w=2529&auto=format&fit=crop');
+            --text-main: #1c1c1e;
+            --text-muted: rgba(60, 60, 67, 0.65);
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 10px 30px 0 rgba(31, 38, 135, 0.08);
+            --accent: #007AFF;
+            --accent-glass: rgba(0, 122, 255, 0.15);
+            --nav-bg: rgba(245, 245, 247, 0.88);
+        }
+
+        [data-theme="space"] {
+            --bg-color: #050505;
+            --bg-image: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2000&auto=format&fit=crop');
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --glass-bg: rgba(10, 10, 22, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.85);
+            --accent: #bf55ec;
+            --accent-glass: rgba(191, 85, 236, 0.3);
+            --nav-bg: rgba(8, 8, 15, 0.9);
+        }
+
+        [data-theme="architecture"] {
+            --bg-image: url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2000&auto=format&fit=crop');
+            --text-main: #ffffff;
+            --text-muted: rgba(255,255,255,0.7);
+            --glass-bg: rgba(15, 15, 18, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --accent: #d4af37;
+            --accent-glass: rgba(212, 175, 55, 0.25);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-image 0.5s ease, background-color 0.5s ease, color 0.3s ease;
+        }
+
+        .bg-overlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.55) 100%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-panel {
+            border-radius: 24px;
+            padding: 20px;
+        }
+
+        .glass-input {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            border-radius: 16px;
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glass);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .glass-btn {
+            background: var(--accent-glass);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 16px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .glass-btn:active {
+            transform: scale(0.95);
+            background: var(--accent);
+            color: #fff;
+        }
+
+        #app-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .view-section {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 110px;
+            animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+        }
+
+        /* iOS style Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 24px);
+            max-width: 500px;
+            height: 70px;
+            background: var(--nav-bg);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid var(--glass-border);
+            border-radius: 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 12px;
+            z-index: 50;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .nav-item {
+            color: var(--text-muted);
+            font-size: 1.25rem;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            transition: all 0.25s ease;
+            position: relative;
+            text-decoration: none;
+        }
+        
+        .nav-item span {
+            font-size: 0.55rem;
+            margin-top: 4px;
+            font-weight: 700;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+        }
+
+        .nav-item.active {
+            color: var(--accent);
+        }
+        
+        .nav-item.active i {
+            transform: translateY(-2px) scale(1.15);
+        }
+
+        .category-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 10px;
+            text-align: center;
+            gap: 10px;
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        .category-card:active { transform: scale(0.94); }
+        .category-card i { font-size: 1.8rem; color: var(--accent); }
+        .category-card span { font-size: 0.75rem; font-weight: 600; line-height: 1.1; }
+
+        /* HORIZONTAL SCHEDULE FIX */
+        .horizontal-schedule {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            padding: 10px 10px 30px 10px;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-x: contain;
+        }
+        .day-card {
+            flex: 0 0 85%; /* Shows a peek of the next card */
+            scroll-snap-align: center;
+            border-radius: 24px;
+            transition: transform 0.3s ease;
+        }
+        @media (min-width: 640px) {
+            .day-card { flex: 0 0 300px; }
+        }
+
+        .masonry-grid {
+            column-count: 2;
+            column-gap: 14px;
+        }
+        @media (min-width: 768px) {
+            .masonry-grid { column-count: 3; }
+        }
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 14px;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+        }
+        .masonry-item img {
+            width: 100%;
+            display: block;
+            border-radius: 16px;
+            object-fit: cover;
+        }
+
+        #toast {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: var(--accent);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.5);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            width: 100%;
+            max-width: 500px;
+            max-height: 85vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body data-theme="apple-dark">
+    <div class="bg-overlay"></div>
+    <div id="toast"><i class="fa-solid fa-check"></i> <span id="toast-msg">Отправлено</span></div>
+
+    <!-- Category Detail Modal -->
+    <div id="category-modal" class="modal-overlay">
+        <div class="modal-content glass glass-panel p-6 relative">
+            <button onclick="closeCategoryModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center gap-3 mb-5">
+                <div id="modal-cat-icon" class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-3xl text-blue-400">
+                    <i class="fa-solid fa-folder"></i>
+                </div>
+                <div>
+                    <h3 id="modal-cat-title" class="text-2xl font-bold">Раздел</h3>
+                    <p id="modal-cat-count" class="text-xs text-muted mt-1 uppercase tracking-wider">0 заметок</p>
+                </div>
+            </div>
+
+            <!-- Quick Note Form inside Category -->
+            <div class="mb-5">
+                <div class="flex gap-2">
+                    <input type="text" id="modal-note-input" class="glass-input flex-1 p-3.5 text-sm" placeholder="Новая заметка или задача...">
+                    <button onclick="addCategoryNote()" class="glass-btn px-5 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-arrow-up"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- List of items -->
+            <div id="modal-notes-list" class="space-y-3 max-h-80 overflow-y-auto pr-1">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox Modal -->
+    <div id="image-modal" class="modal-overlay">
+        <div class="modal-content glass glass-panel p-4 relative max-w-2xl text-center">
+            <button onclick="closeImageModal()" class="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/60 text-white flex items-center justify-center text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <img id="lightbox-img" src="" alt="Full view" class="w-full h-auto max-h-[65vh] object-contain rounded-xl mb-4">
+            <div class="flex justify-between items-center px-2">
+                <span id="lightbox-title" class="text-xs font-semibold tracking-wider text-muted uppercase">Архитектура</span>
+                <button id="lightbox-wallpaper-btn" onclick="" class="glass-btn px-5 py-2.5 text-xs flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Установить обои
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-container">
+        
+        <section id="view-home" class="view-section active p-5 pt-8">
+            <!-- Settings Button -->
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <p id="date-display" class="text-xs uppercase tracking-widest font-semibold" style="color: var(--text-muted);"></p>
+                </div>
+                <button onclick="switchTab('settings')" class="w-10 h-10 rounded-full glass flex items-center justify-center text-lg active:scale-90 transition">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
+
+            <!-- Header: Clock -->
+            <div class="mb-6 text-center">
+                <h1 id="clock-display" class="text-7xl font-extrabold tracking-tighter mb-1" style="text-shadow: 0 4px 20px rgba(0,0,0,0.5);">00:00</h1>
+            </div>
+
+            <!-- Quick Add Zone -->
+            <div class="glass glass-panel mb-8">
+                <h2 class="text-sm font-bold mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-bolt text-yellow-400"></i> Быстрая запись
+                </h2>
+                <textarea id="quick-input" rows="2" class="w-full glass-input p-3 mb-3 text-sm resize-none" placeholder="Идея, задача, конспект, ссылка..."></textarea>
+                <div class="flex gap-2">
+                    <select id="quick-category" class="glass-input p-3 flex-1 text-sm appearance-none font-medium">
+                        <option value="uni">🏛️ ВУЗы</option>
+                        <option value="arch">📐 МАРШ / Архитектура</option>
+                        <option value="school">🎒 Школа</option>
+                        <option value="house">🧹 Бытовуха</option>
+                        <option value="sport">🏊 Спорт</option>
+                        <option value="art">🎨 Искусство</option>
+                    </select>
+                    <button onclick="submitQuickAdd()" class="glass-btn px-6 flex items-center justify-center text-sm">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Categories Grid -->
+            <div class="flex justify-between items-center mb-3 px-1">
+                <h2 class="text-xs font-bold uppercase tracking-widest" style="color: var(--text-muted);">РАЗДЕЛЫ ЖИЗНИ</h2>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-3">
+                <div onclick="openCategoryModal('uni')" class="glass glass-panel category-card">
+                    <i class="fa-solid fa-university"></i>
+                    <span>ВУЗы</span>
+                </div>
+                <div onclick="openCategoryModal('arch')" class="glass glass-panel category-card">
+                    <i class="fa-solid fa-compass-drafting text-amber-400"></i>
+                    <span>МАРШ</span>
+                </div>
+                <div onclick="openCategoryModal('school')" class="glass glass-panel category-card">
+                    <i class="fa-solid fa-graduation-cap text-emerald-400"></i>
+                    <span>Школа</span>
+                </div>
+                <div onclick="openCategoryModal('house')" class="glass glass-panel category-card">
+                    <i class="fa-solid fa-mug-hot text-orange-400"></i>
+                    <span>Бытовуха</span>
+                </div>
+                <div onclick="openCategoryModal('sport')" class="glass glass-panel category-card">
+                    <i class="fa-solid fa-person-swimming text-cyan-400"></i>
+                    <span>Спорт</span>
+                </div>
+                <div onclick="openCategoryModal('art')" class="glass glass-panel category-card">
+                    <i class="fa-solid fa-palette text-pink-400"></i>
+                    <span>Искусство</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-schedule" class="view-section p-5 pt-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-extrabold tracking-tight">Расписание</h2>
+                <div class="text-xs px-3 py-1.5 rounded-full bg-white/20 font-bold tracking-wider uppercase" id="schedule-week-badge">Эта неделя</div>
+            </div>
+            
+            <!-- Week Switcher Bar -->
+            <div class="glass glass-panel mb-4 flex justify-between items-center p-3">
+                <button onclick="changeWeek(-1)" class="w-12 h-12 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 flex items-center justify-center transition text-lg">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <div class="text-center">
+                    <span id="week-date-range" class="font-black text-base block">-- - --</span>
+                    <span class="text-[0.65rem] opacity-60 uppercase tracking-widest font-semibold mt-1 block animate-pulse">Свайпай дни вбок <i class="fa-solid fa-arrows-left-right ml-1"></i></span>
+                </div>
+                <button onclick="changeWeek(1)" class="w-12 h-12 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 flex items-center justify-center transition text-lg">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <!-- Horizontal Swipe Schedule Tracks -->
+            <div id="schedule-container" class="horizontal-schedule">
+                <!-- Dynamically generated days horizontally -->
+            </div>
+        </section>
+
+        <section id="view-music" class="view-section p-5 pt-8">
+            <div class="mb-8">
+                <h2 class="text-3xl font-extrabold tracking-tight mb-2">Фокус & Звук</h2>
+                <p class="text-sm opacity-70">Идеальный фон для глубокой учебы и архитектурных проектов.</p>
+            </div>
+
+            <!-- Ambient Noise Generators -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <!-- Sound Item: Lo-Fi Ambient Synth -->
+                <div class="glass glass-panel p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-pink-500/20 text-pink-400 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-compact-disc"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-base">Lo-Fi Аккорды</h4>
+                                <p class="text-[0.7rem] opacity-60 uppercase tracking-widest mt-1">Тёплый Эмбиент</p>
+                            </div>
+                        </div>
+                        <button id="btn-sound-lofi" onclick="toggleAudioTrack('lofi')" class="w-12 h-12 rounded-2xl bg-white/10 active:scale-90 flex items-center justify-center text-lg transition-transform">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                    </div>
+                    <input type="range" id="vol-lofi" min="0" max="1" step="0.05" value="0.5" oninput="updateAudioVol('lofi', this.value)" class="w-full accent-pink-500">
+                </div>
+
+                <!-- Sound Item: Deep Brown Noise -->
+                <div class="glass glass-panel p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-wind"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-base">Глубокий Шум</h4>
+                                <p class="text-[0.7rem] opacity-60 uppercase tracking-widest mt-1">Brownian Noise</p>
+                            </div>
+                        </div>
+                        <button id="btn-sound-brown" onclick="toggleAudioTrack('brown')" class="w-12 h-12 rounded-2xl bg-white/10 active:scale-90 flex items-center justify-center text-lg transition-transform">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                    </div>
+                    <input type="range" id="vol-brown" min="0" max="1" step="0.05" value="0.6" oninput="updateAudioVol('brown', this.value)" class="w-full accent-amber-500">
+                </div>
+
+                <!-- Sound Item: Rain Sound -->
+                <div class="glass glass-panel p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-cloud-showers-heavy"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-base">Шум Дождя</h4>
+                                <p class="text-[0.7rem] opacity-60 uppercase tracking-widest mt-1">Мягкий ливень</p>
+                            </div>
+                        </div>
+                        <button id="btn-sound-rain" onclick="toggleAudioTrack('rain')" class="w-12 h-12 rounded-2xl bg-white/10 active:scale-90 flex items-center justify-center text-lg transition-transform">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                    </div>
+                    <input type="range" id="vol-rain" min="0" max="1" step="0.05" value="0.7" oninput="updateAudioVol('rain', this.value)" class="w-full accent-blue-500">
+                </div>
+
+                <!-- Sound Item: White Noise -->
+                <div class="glass glass-panel p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-wave-square"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-base">Белый Шум</h4>
+                                <p class="text-[0.7rem] opacity-60 uppercase tracking-widest mt-1">Маскировка звуков</p>
+                            </div>
+                        </div>
+                        <button id="btn-sound-white" onclick="toggleAudioTrack('white')" class="w-12 h-12 rounded-2xl bg-white/10 active:scale-90 flex items-center justify-center text-lg transition-transform">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                    </div>
+                    <input type="range" id="vol-white" min="0" max="1" step="0.05" value="0.4" oninput="updateAudioVol('white', this.value)" class="w-full accent-purple-500">
+                </div>
+            </div>
+        </section>
+
+        <section id="view-gallery" class="view-section p-5 pt-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-extrabold tracking-tight">Вдохновение</h2>
+                <span id="gallery-counter" class="text-xs px-3 py-1 bg-white/20 rounded-full font-bold uppercase tracking-wider">50+ фото</span>
+            </div>
+            
+            <!-- Filters -->
+            <div class="flex gap-2 mb-6 overflow-x-auto pb-2" style="scrollbar-width: none;">
+                <button onclick="filterGallery('all', this)" class="gallery-filter-btn glass-btn px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap active">Все</button>
+                <button onclick="filterGallery('nasa', this)" class="gallery-filter-btn glass-btn px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap">🚀 NASA & Космос</button>
+                <button onclick="filterGallery('arch', this)" class="gallery-filter-btn glass-btn px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap">📐 Архитектура</button>
+                <button onclick="filterGallery('art', this)" class="gallery-filter-btn glass-btn px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap">🖼️ Искусство</button>
+                <button onclick="filterGallery('urban', this)" class="gallery-filter-btn glass-btn px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap">🌃 Город (Y2K)</button>
+            </div>
+
+            <!-- Masonry Grid for 50+ images -->
+            <div class="masonry-grid" id="gallery-grid">
+                <!-- Populated dynamically with 50+ photos -->
+            </div>
+        </section>
+
+        <section id="view-settings" class="view-section p-5 pt-8">
+            <div class="text-center mb-8">
+                <div class="w-28 h-28 rounded-full bg-gray-500 mx-auto mb-4 border-4 border-white/20 shadow-2xl overflow-hidden glass">
+                    <img src="https://api.dicebear.com/7.x/notionists/svg?seed=ArchStudent2&backgroundColor=transparent" alt="Avatar" class="w-full h-full object-cover">
+                </div>
+                <h2 class="text-2xl font-bold">Будущий Архитектор</h2>
+                <p class="text-sm text-muted mt-1 uppercase tracking-widest font-semibold" style="color: var(--text-muted);">OmniDash OS Pro</p>
+            </div>
+
+            <h3 class="text-xs font-bold mb-4 uppercase tracking-wider pl-2" style="color: var(--text-muted);">Темы Оформления</h3>
+            
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <button onclick="setTheme('apple-dark')" class="glass glass-panel p-4 flex flex-col items-center gap-3 hover:bg-white/10 active:scale-95 transition">
+                    <div class="w-10 h-10 rounded-full bg-black border border-gray-600 shadow-inner"></div>
+                    <span class="text-sm font-bold">Apple Dark</span>
+                </button>
+                <button onclick="setTheme('apple-light')" class="glass glass-panel p-4 flex flex-col items-center gap-3 hover:bg-white/10 active:scale-95 transition">
+                    <div class="w-10 h-10 rounded-full bg-gray-100 border border-gray-300 shadow-inner"></div>
+                    <span class="text-sm font-bold text-black">Apple Light</span>
+                </button>
+                <button onclick="setTheme('architecture')" class="glass glass-panel p-4 flex flex-col items-center gap-3 hover:bg-white/10 active:scale-95 transition">
+                    <div class="w-10 h-10 rounded-full bg-yellow-600 shadow-inner overflow-hidden relative">
+                        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=10&w=50')] bg-cover"></div>
+                    </div>
+                    <span class="text-sm font-bold">Архитектура</span>
+                </button>
+                <button onclick="setTheme('space')" class="glass glass-panel p-4 flex flex-col items-center gap-3 hover:bg-white/10 active:scale-95 transition">
+                    <div class="w-10 h-10 rounded-full bg-purple-900 shadow-inner overflow-hidden relative">
+                        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=10&w=50')] bg-cover"></div>
+                    </div>
+                    <span class="text-sm font-bold">Космос</span>
+                </button>
+            </div>
+            
+            <div class="glass glass-panel p-5 text-center mt-8">
+                <p class="text-xs opacity-60 font-mono">OmniDash Ultimate Build v3.0<br>Made for focus and productivity.</p>
+            </div>
+        </section>
+
+        <!-- Быстрый доступ и навигация в самом низу (как просил!) -->
+        <nav class="bottom-nav">
+            <a href="#" onclick="switchTab('home')" class="nav-item active" id="nav-home">
+                <i class="fa-solid fa-house"></i>
+                <span>Главная</span>
+            </a>
+            <a href="#" onclick="switchTab('schedule')" class="nav-item" id="nav-schedule">
+                <i class="fa-solid fa-calendar-week"></i>
+                <span>Планы</span>
+            </a>
+            <!-- Быстрые разделы в самом низу -->
+            <a href="#" onclick="openCategoryModal('school')" class="nav-item">
+                <i class="fa-solid fa-graduation-cap text-emerald-400"></i>
+                <span>Школа</span>
+            </a>
+            <a href="#" onclick="openCategoryModal('house')" class="nav-item">
+                <i class="fa-solid fa-mug-hot text-orange-400"></i>
+                <span>Дом</span>
+            </a>
+            <a href="#" onclick="switchTab('music')" class="nav-item" id="nav-music">
+                <i class="fa-solid fa-headphones text-pink-400"></i>
+                <span>Музыка</span>
+            </a>
+            <a href="#" onclick="switchTab('gallery')" class="nav-item" id="nav-gallery">
+                <i class="fa-solid fa-image"></i>
+                <span>Галерея</span>
+            </a>
+        </nav>
+    </div>
+
+    <script>
+        
+        // Category Metadata
+        const categoriesMeta = {
+            uni: { title: "ВУЗы", icon: "fa-university", color: "text-blue-400" },
+            arch: { title: "МАРШ / Архитектура", icon: "fa-compass-drafting", color: "text-amber-400" },
+            school: { title: "Школа", icon: "fa-graduation-cap", color: "text-emerald-400" },
+            house: { title: "Бытовуха", icon: "fa-mug-hot", color: "text-orange-400" },
+            sport: { title: "Спорт", icon: "fa-person-swimming", color: "text-cyan-400" },
+            art: { title: "Искусство", icon: "fa-palette", color: "text-pink-400" }
+        };
+
+        // Storage state for user notes
+        let userCategoryNotes = JSON.parse(localStorage.getItem('omniCategoryNotes')) || {
+            uni: ["Изучить правила поступления МАРХИ"],
+            arch: ["Доделать макет", "Эссе по Баухаусу"],
+            school: ["ДЗ по геометрии", "Проект по истории"],
+            house: ["Купить продукты", "Уборка"],
+            sport: ["Бассейн во вторник"],
+            art: []
+        };
+
+        // Schedule Data
+        const scheduleData = {
+            1: [ 
+                { time: "08:20", name: "Разговоры о важном", location: "каб. 135" },
+                { time: "09:15", name: "Обществознание", location: "каб. 107" },
+                { time: "10:20", name: "Литература", location: "каб. 145" },
+                { time: "11:25", name: "Геометрия", location: "каб. 107" },
+                { time: "12:20", name: "Алгебра", location: "каб. 107" },
+                { time: "13:15", name: "Физкультура", location: "Спортзал" }
+            ],
+            2: [ 
+                { time: "08:20", name: "Алгебра", location: "каб. 107" },
+                { time: "09:15", name: "Литература", location: "каб. 145" },
+                { time: "12:20", name: "Химия", location: "каб. 144" },
+                { time: "20:00", name: "Английский", location: "Курсы", icon: "fa-language" }
+            ],
+            3: [ 
+                { time: "08:20", name: "География", location: "каб. 139" },
+                { time: "10:20", name: "Алгебра", location: "каб. 107" },
+                { time: "18:30", name: "МАРШ (Архитектура)", location: "Университет", icon: "fa-compass-drafting", highlight: true }
+            ],
+            4: [ 
+                { time: "08:20", name: "История", location: "каб. 107" },
+                { time: "13:15", name: "Физика", location: "каб. 143" },
+                { time: "18:30", name: "МАРШ (Архитектура)", location: "Университет", icon: "fa-compass-drafting", highlight: true },
+                { time: "20:00", name: "Бассейн", location: "Спорткомплекс", icon: "fa-person-swimming" }
+            ],
+            5: [ 
+                { time: "10:20", name: "Физика", location: "каб. 143" },
+                { time: "11:25", name: "Физкультура", location: "Спортзал" },
+                { time: "21:00", name: "Английский", location: "Онлайн" }
+            ],
+            6: [ 
+                { time: "14:00", name: "Отдых / Семья", location: "Дом", icon: "fa-house" }
+            ],
+            0: [ 
+                { time: "15:00", name: "МАРШ (Архитектура)", location: "Университет", icon: "fa-compass-drafting", highlight: true }
+            ]
+        };
+
+        const photoDatabase = [
+            // NASA & Space (16 photos)
+            { cat: 'nasa', url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800', title: 'Земля из Космоса' },
+            { cat: 'nasa', url: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=800', title: 'Туманность' },
+            { cat: 'nasa', url: 'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?q=80&w=800', title: 'Млечный Путь' },
+            { cat: 'nasa', url: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=800', title: 'Марсианский Ландшафт' },
+            { cat: 'nasa', url: 'https://images.unsplash.com/photo-1536697246787-1f27d39f4a7c?q=80&w=800', title: 'Старт Ракеты' },
+            { cat: 'nasa', url: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=800', title: 'Орбитальная Станция' },
+            { cat: 'nasa', url: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=800', title: 'Звездное Небо' },
+            { cat: 'nasa', url: 'https://images.unsplash.com/photo-1464802686167-b939a6910659?q=80&w=800', title: 'Галактика Андромеда' },
+            { cat: 'nasa', url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800', title: 'Северное Сияние' },
+            { cat: 'nasa', url: 'https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?q=80&w=800', title: 'Космический Корабль' },
+            { cat: 'nasa', url: 'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?q=80&w=800', title: 'Поверхность Луны' },
+            { cat: 'nasa', url: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?q=80&w=800', title: 'Deep Space Hubble' },
+            { cat: 'nasa', url: 'https://images.unsplash.com/photo-1516339901601-2e1b62dc0c45?q=80&w=800', title: 'Солнечное Затмение' },
+            { cat: 'nasa', url: 'https://images.unsplash.com/photo-1538370965046-79c0d6907d47?q=80&w=800', title: 'Космическая Пыль' },
+            { cat: 'nasa', url: 'https://images.unsplash.com/photo-1543722530-d2c3201371e7?q=80&w=800', title: 'Звездный Скоп' },
+            { cat: 'nasa', url: 'https://images.unsplash.com/photo-1454789548928-9efd52dc4031?q=80&w=800', title: 'Астронавт' },
+
+            // Architecture (18 photos)
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800', title: 'Современный Небоскреб' },
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1511818966892-d7d671e672a2?q=80&w=800', title: 'Параметрический Геокупол' },
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=800', title: 'Минималистичный Интерьер' },
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?q=80&w=800', title: 'Бетонные Формы' },
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=800', title: 'Вилла Модерн' },
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=800', title: 'Чертежи и Макет' },
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=800', title: 'Архитектурный Свет' },
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1448630360428-65456885c650?q=80&w=800', title: 'Стеклянный Фасад' },
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=800', title: 'Резиденция в Горах' },
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?q=80&w=800', title: 'Классические Колонны' },
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1524230572899-a752b3835840?q=80&w=800', title: 'Мост в Закате' },
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1506146332389-18140dc7b2fb?q=80&w=800', title: 'Спиральная Лестница' },
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1513584684374-8bab748fbf90?q=80&w=800', title: 'Урбан Архитектура' },
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1431576901776-e539bd916ba2?q=80&w=800', title: 'Городские Высотки' },
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1508873696983-2df515122519?q=80&w=800', title: 'Футуристический Купол' },
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1478028717935-8659616013a4?q=80&w=800', title: 'Музей' },
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1525203303649-0d32bb5826f0?q=80&w=800', title: 'Стекло и Сталь' },
+            { cat: 'arch', url: 'https://images.unsplash.com/photo-1481026469463-66327c86e544?q=80&w=800', title: 'Баухаус Стиль' },
+
+            // Art (13 photos)
+            { cat: 'art', url: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=800', title: 'Абстрактные Краски' },
+            { cat: 'art', url: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=800', title: 'Масло и Текстура' },
+            { cat: 'art', url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=800', title: 'Классическая Скульптура' },
+            { cat: 'art', url: 'https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?q=80&w=800', title: 'Авангардная Живопись' },
+            { cat: 'art', url: 'https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=800', title: 'Неоновые Линии' },
+            { cat: 'art', url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=800', title: 'Галерея Искусств' },
+            { cat: 'art', url: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?q=80&w=800', title: 'Цифровой Арт' },
+            { cat: 'art', url: 'https://images.unsplash.com/photo-1550684848-bac1c5b4e853?q=80&w=800', title: 'Fluid Art' },
+            { cat: 'art', url: 'https://images.unsplash.com/photo-1578926375605-eaf7559b1458?q=80&w=800', title: 'Мраморные Текстуры' },
+            { cat: 'art', url: 'https://images.unsplash.com/photo-1577083552431-6e5fd01aa342?q=80&w=800', title: 'Золото и Черный' },
+            { cat: 'art', url: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?q=80&w=800', title: 'Музейный Зал' },
+            { cat: 'art', url: 'https://images.unsplash.com/photo-1561214115-f2f134cc4912?q=80&w=800', title: 'Концептуальный Арт' },
+            { cat: 'art', url: 'https://images.unsplash.com/photo-1576616086705-64cce1ebce65?q=80&w=800', title: 'Холст' },
+
+            // Urban & Y2K (10 photos)
+            { cat: 'urban', url: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?q=80&w=800', title: 'Токио Киберпанк' },
+            { cat: 'urban', url: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=800', title: 'Неоновый Огни' },
+            { cat: 'urban', url: 'https://images.unsplash.com/photo-1508057198894-247b23fe5ade?q=80&w=800', title: 'Ночной Мегаполис' },
+            { cat: 'urban', url: 'https://images.unsplash.com/photo-1604871000636-074fa5117945?q=80&w=800', title: 'Y2K Градиент' },
+            { cat: 'urban', url: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?q=80&w=800', title: 'Гонконг Улицы' },
+            { cat: 'urban', url: 'https://images.unsplash.com/photo-1477959858617-67f30ac72604?q=80&w=800', title: 'Силуэты Небоскребов' },
+            { cat: 'urban', url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=800', title: 'Звездные Горы' },
+            { cat: 'urban', url: 'https://images.unsplash.com/photo-1523365313936-a6fcbf48842c?q=80&w=800', title: 'Уличное Искусство' },
+            { cat: 'urban', url: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800', title: 'Свет Фонарей' },
+            { cat: 'urban', url: 'https://images.unsplash.com/photo-1511210899015-adff306f8902?q=80&w=800', title: 'Ночной Дождь' }
+        ];
+
+        const dayNames = ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"];
+        const dayShorts = ["ВС", "ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ"];
+        const monthNames = ["Января", "Февраля", "Марта", "Апреля", "Мая", "Июня", "Июля", "Августа", "Сентября", "Октября", "Ноября", "Декабря"];
+
+        let currentWeekOffset = 0; 
+        let activeModalCat = null;
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            const targetSection = document.getElementById('view-' + tabId);
+            const targetNav = document.getElementById('nav-' + tabId);
+            
+            if(targetSection) targetSection.classList.add('active');
+            if(targetNav) targetNav.classList.add('active');
+
+            if(tabId === 'schedule') renderSchedule();
+            if(tabId === 'gallery') renderGallery('all');
+        }
+
+        // БОЛЬШОЕ ИСПРАВЛЕНИЕ: Вызов модальных окон теперь работает безотказно
+        function openCategoryModal(catKey) {
+            activeModalCat = catKey;
+            const meta = categoriesMeta[catKey] || { title: "Раздел", icon: "fa-folder", color: "text-blue-400" };
+            
+            document.getElementById('modal-cat-title').textContent = meta.title;
+            document.getElementById('modal-cat-icon').className = `w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-3xl ${meta.color}`;
+            document.getElementById('modal-cat-icon').innerHTML = `<i class="fa-solid ${meta.icon}"></i>`;
+            
+            renderCategoryNotes();
+            document.getElementById('category-modal').classList.add('active');
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('category-modal').classList.remove('active');
+            activeModalCat = null;
+        }
+
+        function renderCategoryNotes() {
+            if (!activeModalCat) return;
+            const notes = userCategoryNotes[activeModalCat] || [];
+            const listEl = document.getElementById('modal-notes-list');
+            document.getElementById('modal-cat-count').textContent = `${notes.length} заметок`;
+
+            if (notes.length === 0) {
+                listEl.innerHTML = `<p class="text-center text-sm font-semibold opacity-40 py-10 border-2 border-dashed border-white/20 rounded-xl">Заметок пока нет. Напишите первую выше!</p>`;
+                return;
+            }
+
+            listEl.innerHTML = notes.map((note, index) => `
+                <div class="glass p-4 rounded-xl flex justify-between items-center gap-3">
+                    <span class="text-sm font-semibold leading-relaxed">${escapeHtml(note)}</span>
+                    <button onclick="deleteCategoryNote(${index})" class="text-red-400 hover:text-red-300 p-2 text-lg active:scale-90 transition">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function addCategoryNote() {
+            const input = document.getElementById('modal-note-input');
+            const text = input.value.trim();
+            if (!text || !activeModalCat) return;
+
+            if (!userCategoryNotes[activeModalCat]) userCategoryNotes[activeModalCat] = [];
+            userCategoryNotes[activeModalCat].unshift(text);
+            
+            localStorage.setItem('omniCategoryNotes', JSON.stringify(userCategoryNotes));
+            input.value = '';
+            renderCategoryNotes();
+            showToast('Заметка добавлена!');
+        }
+
+        function deleteCategoryNote(index) {
+            if (!activeModalCat || !userCategoryNotes[activeModalCat]) return;
+            userCategoryNotes[activeModalCat].splice(index, 1);
+            localStorage.setItem('omniCategoryNotes', JSON.stringify(userCategoryNotes));
+            renderCategoryNotes();
+            showToast('Удалено');
+        }
+
+        function submitQuickAdd() {
+            const input = document.getElementById('quick-input');
+            const catSelect = document.getElementById('quick-category');
+            const val = input.value.trim();
+            const cat = catSelect.value;
+
+            if (val) {
+                if (!userCategoryNotes[cat]) userCategoryNotes[cat] = [];
+                userCategoryNotes[cat].unshift(val);
+                localStorage.setItem('omniCategoryNotes', JSON.stringify(userCategoryNotes));
+
+                input.value = '';
+                const catTitle = categoriesMeta[cat]?.title || 'раздел';
+                showToast(`Сохранено в "${catTitle}"`);
+            }
+        }
+
+        // БОЛЬШОЕ ИСПРАВЛЕНИЕ: Логика календаря теперь 100% работает
+        function changeWeek(direction) {
+            currentWeekOffset += direction;
+            renderSchedule();
+            showToast(direction > 0 ? "Следующая неделя" : "Предыдущая неделя");
+        }
+
+        function getMondayOfWeek(offsetWeeks) {
+            const now = new Date();
+            const day = now.getDay();
+            const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+            const monday = new Date(now.setDate(diff));
+            monday.setDate(monday.getDate() + (offsetWeeks * 7));
+            monday.setHours(0, 0, 0, 0);
+            return monday;
+        }
+
+        function renderSchedule() {
+            const container = document.getElementById('schedule-container');
+            container.innerHTML = '';
+
+            const monday = getMondayOfWeek(currentWeekOffset);
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+
+            const rangeStr = `${monday.getDate()} ${monthNames[monday.getMonth()]} - ${sunday.getDate()} ${monthNames[sunday.getMonth()]}`;
+            document.getElementById('week-date-range').textContent = rangeStr;
+
+            const badge = document.getElementById('schedule-week-badge');
+            if (currentWeekOffset === 0) badge.textContent = "Эта неделя";
+            else if (currentWeekOffset === 1) badge.textContent = "След. неделя";
+            else if (currentWeekOffset === -1) badge.textContent = "Прошлая неделя";
+            else badge.textContent = `Неделя (${currentWeekOffset > 0 ? '+' : ''}${currentWeekOffset})`;
+
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            // ПН (1) -> ВС (0)
+            const daysOrder = [1, 2, 3, 4, 5, 6, 0];
+
+            daysOrder.forEach((dayIndex, i) => {
+                const dayDate = new Date(monday);
+                dayDate.setDate(monday.getDate() + i);
+                const isToday = dayDate.getTime() === today.getTime();
+                const dayEvents = scheduleData[dayIndex] || [];
+
+                let dayHtml = `
+                    <div class="day-card glass p-5 flex-shrink-0">
+                        <div class="flex justify-between items-center mb-5 pb-3 border-b border-white/20">
+                            <div>
+                                <span class="text-xs font-black uppercase tracking-widest ${isToday ? 'text-accent' : 'text-muted'}">${dayShorts[dayIndex]}</span>
+                                <h3 class="text-xl font-extrabold leading-tight mt-1">${dayNames[dayIndex]}</h3>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-2xl font-black">${dayDate.getDate()}</span>
+                                <span class="text-[0.65rem] block opacity-70 font-bold uppercase tracking-wider">${monthNames[dayDate.getMonth()]}</span>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                `;
+
+                if (dayEvents.length === 0) {
+                    dayHtml += `<div class="py-8 text-center"><i class="fa-solid fa-mug-hot text-2xl opacity-20 mb-2"></i><p class="text-sm font-semibold opacity-40">Нет занятий</p></div>`;
+                } else {
+                    dayEvents.forEach(evt => {
+                        const highlightStyle = evt.highlight ? 'color: var(--accent);' : '';
+                        dayHtml += `
+                            <div class="relative pl-4 border-l-2 border-white/10 ${evt.highlight ? 'border-accent' : ''}">
+                                <span class="text-xs font-bold opacity-60 mb-1 block">${evt.time}</span>
+                                <h4 class="font-extrabold text-sm leading-snug" style="${highlightStyle}">
+                                    ${evt.icon ? `<i class="fa-solid ${evt.icon} mr-1.5 opacity-80"></i>` : ''}${evt.name}
+                                </h4>
+                                <p class="text-xs font-medium opacity-60 mt-1"><i class="fa-solid fa-location-dot mr-1 text-[0.6rem]"></i>${evt.location}</p>
+                            </div>
+                        `;
+                    });
+                }
+
+                dayHtml += `</div></div>`;
+                container.insertAdjacentHTML('beforeend', dayHtml);
+            });
+        }
+
+        // БОЛЬШОЕ ИСПРАВЛЕНИЕ: Безопасная функция без event
+        function filterGallery(cat, btnElement = null) {
+            document.querySelectorAll('.gallery-filter-btn').forEach(btn => btn.classList.remove('active'));
+            if (btnElement) {
+                btnElement.classList.add('active');
+            } else {
+                // Если вызвана программно при запуске
+                const defaultBtn = document.querySelector('.gallery-filter-btn');
+                if(defaultBtn) defaultBtn.classList.add('active');
+            }
+            renderGallery(cat);
+        }
+
+        function renderGallery(filterCategory) {
+            const grid = document.getElementById('gallery-grid');
+            grid.innerHTML = '';
+
+            const filtered = filterCategory === 'all' 
+                ? photoDatabase 
+                : photoDatabase.filter(item => item.cat === filterCategory);
+
+            document.getElementById('gallery-counter').textContent = `${filtered.length} фото`;
+
+            filtered.forEach((photo) => {
+                const itemHtml = `
+                    <div onclick="openImageModal('${photo.url}', '${photo.title}')" class="masonry-item glass p-1 shadow-xl hover:scale-105 transition-transform duration-300">
+                        <img src="${photo.url}" alt="${photo.title}" loading="lazy">
+                        <div class="p-3 text-left">
+                            <p class="text-xs font-bold truncate opacity-90">${photo.title}</p>
+                        </div>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', itemHtml);
+            });
+        }
+
+        function openImageModal(url, title) {
+            document.getElementById('lightbox-img').src = url;
+            document.getElementById('lightbox-title').textContent = title;
+            document.getElementById('lightbox-wallpaper-btn').onclick = function() {
+                setCustomWallpaper(url);
+                closeImageModal();
+            };
+            document.getElementById('image-modal').classList.add('active');
+        }
+
+        function closeImageModal() {
+            document.getElementById('image-modal').classList.remove('active');
+        }
+
+        // --- AUDIO ENGINE ---
+        let audioCtx = null;
+        const activeNodes = {};
+
+        function initAudioContext() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function toggleAudioTrack(type) {
+            initAudioContext();
+            const btn = document.getElementById(`btn-sound-${type}`);
+
+            if (activeNodes[type]) {
+                activeNodes[type].stop();
+                delete activeNodes[type];
+                btn.innerHTML = `<i class="fa-solid fa-play"></i>`;
+                btn.classList.remove('bg-white', 'text-black');
+            } else {
+                const gainNode = audioCtx.createGain();
+                const volSlider = document.getElementById(`vol-${type}`);
+                gainNode.gain.value = parseFloat(volSlider.value);
+                gainNode.connect(audioCtx.destination);
+
+                let sourceNode;
+                if (type === 'white') sourceNode = createNoiseBuffer('white');
+                else if (type === 'brown') sourceNode = createNoiseBuffer('brown');
+                else if (type === 'rain') sourceNode = createRainSynth();
+                else if (type === 'lofi') sourceNode = createLoFiSynth();
+
+                if (sourceNode) {
+                    sourceNode.connect(gainNode);
+                    sourceNode.start();
+                    activeNodes[type] = {
+                        stop: () => {
+                            try { sourceNode.stop(); } catch(e){}
+                            try { sourceNode.disconnect(); } catch(e){}
+                        },
+                        gain: gainNode
+                    };
+                    btn.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+                    btn.classList.add('bg-white', 'text-black');
+                }
+            }
+        }
+
+        function updateAudioVol(type, val) {
+            if (activeNodes[type] && activeNodes[type].gain) {
+                activeNodes[type].gain.gain.value = parseFloat(val);
+            }
+        }
+
+        function createNoiseBuffer(type) {
+            const bufferSize = audioCtx.sampleRate * 2;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            let lastOut = 0.0;
+            for (let i = 0; i < bufferSize; i++) {
+                const white = Math.random() * 2 - 1;
+                if (type === 'brown') {
+                    lastOut = (lastOut + (0.02 * white)) / 1.02;
+                    data[i] = lastOut * 3.5;
+                } else { data[i] = white * 0.2; }
+            }
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            noise.loop = true;
+            return noise;
+        }
+
+        function createRainSynth() {
+            const noise = createNoiseBuffer('brown');
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 600;
+            noise.connect(filter);
+            return noise;
+        }
+
+        function createLoFiSynth() {
+            const osc = audioCtx.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(220, audioCtx.currentTime); 
+            const lfo = audioCtx.createOscillator();
+            lfo.frequency.value = 0.2;
+            const lfoGain = audioCtx.createGain();
+            lfoGain.gain.value = 3;
+            lfo.connect(osc.frequency);
+            lfo.start();
+            osc.start();
+            return osc;
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('clock-display').textContent = `${h}:${m}`;
+            
+            const dayOfWeek = dayNames[now.getDay()];
+            const date = now.getDate();
+            const month = monthNames[now.getMonth()];
+            document.getElementById('date-display').textContent = `${dayOfWeek}, ${date} ${month}`;
+        }
+
+        function setTheme(themeName) {
+            document.body.setAttribute('data-theme', themeName);
+            document.body.style.backgroundImage = '';
+            localStorage.setItem('omniTheme', themeName);
+            showToast(`Тема установлена`);
+        }
+
+        function setCustomWallpaper(url) {
+            document.body.style.backgroundImage = `url('${url}')`;
+            showToast('Обои установлены!');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 2500);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function init() {
+            const savedTheme = localStorage.getItem('omniTheme');
+            if (savedTheme) setTheme(savedTheme);
+
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // Безопасный вызов без event
+            filterGallery('all', null);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
