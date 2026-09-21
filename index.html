@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OmniDash - Архитектура и Жизнь</title>
+    
+    <!-- Tailwind CSS для базовой разметки -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            /* Базовые переменные для Apple Dark (По умолчанию) */
+            --bg-color: #000000;
+            --bg-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop'); /* Абстрактный темный фон */
+            --text-main: #ffffff;
+            --text-muted: rgba(255, 255, 255, 0.6);
+            --glass-bg: rgba(30, 30, 30, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            --accent: #0A84FF; /* Apple Blue */
+            --accent-glass: rgba(10, 132, 255, 0.2);
+            --nav-bg: rgba(20, 20, 20, 0.8);
+        }
+
+        [data-theme="apple-light"] {
+            --bg-color: #f2f2f7;
+            --bg-image: url('https://images.unsplash.com/photo-1557682250-33bd709cbe85?q=80&w=2529&auto=format&fit=crop'); /* Светлый градиент */
+            --text-main: #1c1c1e;
+            --text-muted: rgba(60, 60, 67, 0.6);
+            --glass-bg: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+            --accent: #007AFF;
+            --accent-glass: rgba(0, 122, 255, 0.15);
+            --nav-bg: rgba(240, 240, 240, 0.8);
+        }
+
+        [data-theme="space"] {
+            --bg-color: #050505;
+            --bg-image: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2000&auto=format&fit=crop');
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --glass-bg: rgba(10, 10, 20, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+            --accent: #bf55ec;
+            --accent-glass: rgba(191, 85, 236, 0.3);
+            --nav-bg: rgba(5, 5, 10, 0.9);
+        }
+
+        [data-theme="architecture"] {
+            --bg-image: url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2000&auto=format&fit=crop');
+            --text-main: #ffffff;
+            --text-muted: rgba(255,255,255,0.7);
+            --glass-bg: rgba(0, 0, 0, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --accent: #d4af37; /* Золотой акцент */
+            --accent-glass: rgba(212, 175, 55, 0.2);
+        }
+
+        [data-theme="art"] {
+            --bg-image: url('https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2000&auto=format&fit=crop');
+            --text-main: #ffffff;
+            --glass-bg: rgba(20, 20, 20, 0.5);
+            --accent: #ff4757;
+            --accent-glass: rgba(255, 71, 87, 0.3);
+        }
+
+        [data-theme="minimal"] {
+            --bg-image: none;
+            --bg-color: #111;
+            --text-main: #fff;
+            --text-muted: #888;
+            --glass-bg: #222;
+            --glass-border: #333;
+            --glass-shadow: none;
+            --accent: #fff;
+            --accent-glass: rgba(255,255,255,0.1);
+        }
+
+        [data-theme="y2k"] {
+            --bg-image: url('https://images.unsplash.com/photo-1604871000636-074fa5117945?q=80&w=2000&auto=format&fit=crop'); /* Яркие градиенты */
+            --glass-bg: rgba(255, 255, 255, 0.3);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --text-main: #ffffff;
+            --accent: #00f0ff;
+        }
+
+        [data-theme="rock"] {
+            --bg-image: url('https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?q=80&w=2000&auto=format&fit=crop');
+            --glass-bg: rgba(0, 0, 0, 0.8);
+            --glass-border: #ff0000;
+            --text-main: #fff;
+            --accent: #ff0000;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-image 0.5s ease, background-color 0.5s ease, color 0.3s ease;
+        }
+
+        /* Оверлей для затемнения фона, чтобы текст читался лучше */
+        .bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 100%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Классы жидкого стекла */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .glass-panel {
+            border-radius: 24px;
+            padding: 20px;
+        }
+
+        .glass-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            border-radius: 16px;
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glass);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-btn {
+            background: var(--accent-glass);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 16px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .glass-btn:active {
+            transform: scale(0.96);
+            background: var(--accent);
+            color: #fff;
+        }
+
+        /* Структура приложения */
+        #app-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .view-section {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 100px; /* Место для навбара */
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Скрываем скроллбар, но оставляем функционал */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        /* Навигация */
+        .bottom-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 40px);
+            max-width: 400px;
+            height: 70px;
+            background: var(--nav-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 35px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 10px;
+            z-index: 50;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .nav-item {
+            color: var(--text-muted);
+            font-size: 1.25rem;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .nav-item span {
+            font-size: 0.6rem;
+            margin-top: 4px;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(5px);
+            transition: all 0.3s ease;
+            position: absolute;
+            bottom: -5px;
+        }
+
+        .nav-item.active {
+            color: var(--accent);
+            transform: translateY(-5px);
+        }
+        
+        .nav-item.active i {
+            transform: translateY(-5px);
+        }
+
+        .nav-item.active span {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Специфичные стили компонентов */
+        .category-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 10px;
+            text-align: center;
+            gap: 10px;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        .category-card:active { transform: scale(0.95); }
+        .category-card i { font-size: 1.8rem; color: var(--accent); }
+        .category-card span { font-size: 0.8rem; font-weight: 500; line-height: 1.1;}
+
+        .timeline-item {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 15px;
+            border-left: 2px solid var(--glass-border);
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 5px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+        .timeline-item.past { opacity: 0.5; border-left-color: transparent; }
+        .timeline-item.past::before { background: var(--text-muted); box-shadow: none; }
+        .timeline-item.now::before { animation: pulse 1.5s infinite; background: #2ed573; box-shadow: 0 0 15px #2ed573;}
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .masonry-grid {
+            column-count: 2;
+            column-gap: 15px;
+        }
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 15px;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+        .masonry-item img {
+            width: 100%;
+            display: block;
+            border-radius: 16px;
+        }
+        .set-wallpaper-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 0.7rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .masonry-item:hover .set-wallpaper-btn, 
+        .masonry-item:active .set-wallpaper-btn {
+            opacity: 1;
+        }
+
+        /* Toast notification */
+        #toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: var(--accent);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 500;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            z-index: 100;
+        }
+        #toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        select option {
+            background: var(--bg-color);
+            color: var(--text-main);
+        }
+    </style>
+</head>
+<body data-theme="apple-dark">
+    <div class="bg-overlay"></div>
+    <div id="toast"><i class="fa-solid fa-check mr-2"></i> Отправлено в раздел</div>
+
+    <div id="app-container">
+        
+        <section id="view-home" class="view-section active p-5 pt-8">
+            <!-- Header: Clock & Date -->
+            <div class="mb-8 text-center">
+                <h1 id="clock-display" class="text-5xl font-bold tracking-tighter mb-1" style="text-shadow: 0 4px 20px rgba(0,0,0,0.5);">00:00</h1>
+                <p id="date-display" class="text-sm uppercase tracking-widest text-muted" style="color: var(--text-muted);"></p>
+            </div>
+
+            <!-- Countdown Widget -->
+            <div class="glass glass-panel mb-6 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-1 h-full bg-accent" style="background-color: var(--accent);"></div>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-xs uppercase tracking-wider mb-1" style="color: var(--text-muted);">Следующее событие</p>
+                        <h3 id="next-event-title" class="font-semibold text-lg leading-tight">Загрузка...</h3>
+                        <p id="next-event-time" class="text-sm mt-1 opacity-80"></p>
+                    </div>
+                    <div class="text-right">
+                        <div id="countdown-timer" class="text-2xl font-bold font-mono" style="color: var(--accent);">--:--</div>
+                        <p class="text-xs opacity-70">осталось</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Add Zone (Центр управления) -->
+            <div class="glass glass-panel mb-8">
+                <h2 class="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-bolt text-yellow-400"></i> Быстрая запись
+                </h2>
+                <textarea id="quick-input" rows="3" class="w-full glass-input p-3 mb-3 text-sm resize-none" placeholder="Идеи, концепты, задачи, формулы..."></textarea>
+                <div class="flex gap-2">
+                    <select id="quick-category" class="glass-input p-2 flex-1 text-sm appearance-none">
+                        <option value="plans">📌 Планы</option>
+                        <option value="tasks">✅ Задачи на день</option>
+                        <option value="uni">🏛️ ВУЗы</option>
+                        <option value="arch">📐 Архитектура</option>
+                        <option value="school">🎒 Школа</option>
+                        <option value="science">🔬 Наука</option>
+                        <option value="math">➗ Математика</option>
+                    </select>
+                    <button onclick="submitQuickAdd()" class="glass-btn px-6 py-2 flex items-center justify-center">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Categories Grid -->
+            <h2 class="text-sm font-semibold mb-3 ml-2" style="color: var(--text-muted);">РАЗДЕЛЫ</h2>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="glass glass-panel category-card">
+                    <i class="fa-solid fa-university"></i>
+                    <span>ВУЗы</span>
+                </div>
+                <div class="glass glass-panel category-card">
+                    <i class="fa-solid fa-compass-drafting"></i>
+                    <span>МАРШ</span>
+                </div>
+                <div class="glass glass-panel category-card">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <span>Школа</span>
+                </div>
+                <div class="glass glass-panel category-card">
+                    <i class="fa-solid fa-person-swimming"></i>
+                    <span>Спорт</span>
+                </div>
+                <div class="glass glass-panel category-card">
+                    <i class="fa-solid fa-atom"></i>
+                    <span>Наука</span>
+                </div>
+                <div class="glass glass-panel category-card">
+                    <i class="fa-solid fa-palette"></i>
+                    <span>Искусство</span>
+                </div>
+                <div class="glass glass-panel category-card">
+                    <i class="fa-solid fa-brain"></i>
+                    <span>Психология</span>
+                </div>
+                <div class="glass glass-panel category-card">
+                    <i class="fa-solid fa-square-root-variable"></i>
+                    <span>Математика</span>
+                </div>
+                <div class="glass glass-panel category-card">
+                    <i class="fa-solid fa-mug-hot"></i>
+                    <span>Бытовуха</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-schedule" class="view-section p-5 pt-8">
+            <h2 class="text-2xl font-bold mb-6 text-center">Расписание</h2>
+            
+            <div class="glass glass-panel mb-6 flex justify-between items-center p-2">
+                <button class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="fa-solid fa-chevron-left"></i></button>
+                <span class="font-semibold text-sm">Эта неделя</span>
+                <button class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+
+            <div id="schedule-container" class="space-y-6">
+                <!-- Расписание будет сгенерировано JS -->
+            </div>
+        </section>
+
+        <section id="view-gallery" class="view-section p-5 pt-8">
+            <h2 class="text-2xl font-bold mb-4">Вдохновение</h2>
+            
+            <!-- Filters -->
+            <div class="flex gap-2 mb-6 overflow-x-auto pb-2" style="scrollbar-width: none;">
+                <button onclick="loadGallery('arch')" class="glass-btn px-4 py-1.5 rounded-full text-sm whitespace-nowrap">Архитектура</button>
+                <button onclick="loadGallery('space')" class="glass-btn px-4 py-1.5 rounded-full text-sm whitespace-nowrap">NASA / Космос</button>
+                <button onclick="loadGallery('art')" class="glass-btn px-4 py-1.5 rounded-full text-sm whitespace-nowrap">Искусство</button>
+            </div>
+
+            <div class="masonry-grid" id="gallery-grid">
+                <!-- Изображения -->
+            </div>
+        </section>
+
+        <section id="view-settings" class="view-section p-5 pt-8">
+            <div class="text-center mb-8">
+                <div class="w-24 h-24 rounded-full bg-gray-500 mx-auto mb-3 border-2 border-white/20 shadow-lg overflow-hidden glass">
+                    <img src="https://api.dicebear.com/7.x/notionists/svg?seed=ArchStudent&backgroundColor=transparent" alt="Avatar" class="w-full h-full object-cover">
+                </div>
+                <h2 class="text-xl font-bold">Профиль</h2>
+                <p class="text-sm text-muted" style="color: var(--text-muted);">Будущий архитектор</p>
+            </div>
+
+            <h3 class="text-sm font-semibold mb-4 uppercase tracking-wider" style="color: var(--text-muted);">Внешний вид (Темы)</h3>
+            
+            <div class="grid grid-cols-2 gap-3 mb-8">
+                <button onclick="setTheme('apple-dark')" class="glass glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white/10 transition">
+                    <div class="w-8 h-8 rounded-full bg-black border border-gray-600 shadow-inner"></div>
+                    <span class="text-sm">Apple Dark</span>
+                </button>
+                <button onclick="setTheme('apple-light')" class="glass glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white/10 transition">
+                    <div class="w-8 h-8 rounded-full bg-gray-100 border border-gray-300 shadow-inner"></div>
+                    <span class="text-sm">Apple Light</span>
+                </button>
+                <button onclick="setTheme('architecture')" class="glass glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white/10 transition">
+                    <div class="w-8 h-8 rounded-full bg-yellow-600 shadow-inner overflow-hidden relative">
+                        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=10&w=50')] bg-cover"></div>
+                    </div>
+                    <span class="text-sm">Архитектура</span>
+                </button>
+                <button onclick="setTheme('space')" class="glass glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white/10 transition">
+                    <div class="w-8 h-8 rounded-full bg-purple-900 shadow-inner overflow-hidden relative">
+                        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=10&w=50')] bg-cover"></div>
+                    </div>
+                    <span class="text-sm">Космос</span>
+                </button>
+                <button onclick="setTheme('art')" class="glass glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white/10 transition">
+                    <div class="w-8 h-8 rounded-full bg-red-500 shadow-inner overflow-hidden relative">
+                        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=10&w=50')] bg-cover"></div>
+                    </div>
+                    <span class="text-sm">Искусство</span>
+                </button>
+                <button onclick="setTheme('minimal')" class="glass glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white/10 transition">
+                    <div class="w-8 h-8 rounded-full bg-black border-2 border-white shadow-inner"></div>
+                    <span class="text-sm">Минимализм</span>
+                </button>
+                <button onclick="setTheme('y2k')" class="glass glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white/10 transition">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-pink-500 shadow-inner"></div>
+                    <span class="text-sm">Y2K Vibe</span>
+                </button>
+                <button onclick="setTheme('rock')" class="glass glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white/10 transition">
+                    <div class="w-8 h-8 rounded-full bg-black border border-red-600 shadow-inner"></div>
+                    <span class="text-sm">Rock 90s</span>
+                </button>
+            </div>
+            
+            <div class="glass glass-panel p-4 text-center">
+                <p class="text-xs opacity-50">OmniDash v1.0 • Спроектировано для эффективности</p>
+            </div>
+        </section>
+
+        <nav class="bottom-nav">
+            <a href="#" onclick="switchTab('home')" class="nav-item active" id="nav-home">
+                <i class="fa-solid fa-layer-group"></i>
+                <span>Главная</span>
+            </a>
+            <a href="#" onclick="switchTab('schedule')" class="nav-item" id="nav-schedule">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span>Планы</span>
+            </a>
+            <a href="#" onclick="switchTab('gallery')" class="nav-item" id="nav-gallery">
+                <i class="fa-solid fa-image"></i>
+                <span>Вдохновение</span>
+            </a>
+            <a href="#" onclick="switchTab('settings')" class="nav-item" id="nav-settings">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Настройки</span>
+            </a>
+        </nav>
+    </div>
+
+    <script>
+        // --- ДАННЫЕ РАСПИСАНИЯ ---
+        const scheduleData = {
+            1: [ // Понедельник
+                { time: "08:20", name: "Разговоры о важном", location: "каб. 135" },
+                { time: "09:15", name: "Обществознание", location: "каб. 107" },
+                { time: "10:20", name: "Литература", location: "каб. 145" },
+                { time: "11:25", name: "Геометрия", location: "каб. 107" },
+                { time: "12:20", name: "Алгебра", location: "каб. 107" },
+                { time: "13:15", name: "Физкультура", location: "Спортзал" },
+                { time: "20:00", name: "Бассейн", location: "Спорткомплекс", icon: "fa-person-swimming" }
+            ],
+            2: [ // Вторник
+                { time: "08:20", name: "Алгебра", location: "каб. 107" },
+                { time: "09:15", name: "Литература", location: "каб. 145" },
+                { time: "10:20", name: "Русский язык", location: "каб. 145" },
+                { time: "11:25", name: "Вероятность и статистика", location: "каб. 107" },
+                { time: "12:20", name: "Химия", location: "каб. 144" },
+                { time: "13:15", name: "Обществознание", location: "каб. 107" },
+                { time: "14:15", name: "Информатика", location: "каб. 107" },
+                { time: "20:00", name: "Английский", location: "Онлайн / Курсы" }
+            ],
+            3: [ // Среда
+                { time: "08:20", name: "География", location: "каб. 139" },
+                { time: "09:15", name: "Основы безопасности (ОБЗР)", location: "каб. 107" },
+                { time: "10:20", name: "Алгебра", location: "каб. 107" },
+                { time: "11:25", name: "Обществознание", location: "каб. 107" },
+                { time: "12:20", name: "История", location: "каб. 107" },
+                { time: "13:15", name: "Английский язык", location: "каб. 107" },
+                { time: "18:30", name: "МАРШ (Архитектура)", location: "Университет", icon: "fa-compass-drafting", highlight: true }
+            ],
+            4: [ // Четверг
+                { time: "08:20", name: "История", location: "каб. 107" },
+                { time: "09:15", name: "Биология", location: "каб. 107" },
+                { time: "10:20", name: "Английский язык", location: "каб. 107" },
+                { time: "11:25", name: "Русский язык", location: "каб. 145" },
+                { time: "12:20", name: "Литература", location: "каб. 145" },
+                { time: "13:15", name: "Физика", location: "каб. 143" },
+                { time: "14:15", name: "Английский язык", location: "каб. 107" },
+                { time: "18:30", name: "МАРШ (Архитектура)", location: "Университет", icon: "fa-compass-drafting", highlight: true },
+                { time: "20:00", name: "Бассейн", location: "Спорткомплекс", icon: "fa-person-swimming" }
+            ],
+            5: [ // Пятница
+                { time: "10:20", name: "Физика", location: "каб. 143" },
+                { time: "11:25", name: "Физкультура", location: "Спортзал" },
+                { time: "12:20", name: "История", location: "каб. 107" },
+                { time: "13:15", name: "Обществознание", location: "каб. 107" },
+                { time: "14:15", name: "История", location: "каб. 107" },
+                { time: "21:00", name: "Английский", location: "Онлайн" }
+            ],
+            6: [ // Суббота
+                { time: "14:00", name: "Поездка к Бате", location: "Вторая половина дня", icon: "fa-car" }
+            ],
+            0: [ // Воскресенье
+                { time: "15:00", name: "МАРШ (Архитектура)", location: "Университет", icon: "fa-compass-drafting", highlight: true }
+            ]
+        };
+
+        const dayNames = ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"];
+        const monthNames = ["Января", "Февраля", "Марта", "Апреля", "Мая", "Июня", "Июля", "Августа", "Сентября", "Октября", "Ноября", "Декабря"];
+
+        let countdownInterval;
+
+        // --- РОУТИНГ (ВКЛАДКИ) ---
+        function switchTab(tabId) {
+            // Убираем активный класс со всех секций и кнопок навигации
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            // Добавляем активный класс нужным
+            document.getElementById('view-' + tabId).classList.add('active');
+            document.getElementById('nav-' + tabId).classList.add('active');
+
+            if(tabId === 'schedule') renderSchedule();
+            if(tabId === 'gallery' && document.getElementById('gallery-grid').innerHTML.trim() === '') loadGallery('arch');
+        }
+
+        // --- ВРЕМЯ И КАЛЕНДАРЬ ---
+        function updateClock() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            
+            document.getElementById('clock-display').textContent = `${h}:${m}`;
+            
+            const dayOfWeek = dayNames[now.getDay()];
+            const date = now.getDate();
+            const month = monthNames[now.getMonth()];
+            document.getElementById('date-display').textContent = `${dayOfWeek}, ${date} ${month}`;
+
+            updateNextEvent(now);
+        }
+
+        function timeToMinutes(timeStr) {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        function updateNextEvent(now) {
+            const currentDay = now.getDay();
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+            
+            let nextEvent = null;
+            let eventDate = now;
+
+            // Ищем событие сегодня
+            const todayEvents = scheduleData[currentDay] || [];
+            for (let event of todayEvents) {
+                if (timeToMinutes(event.time) > currentMins) {
+                    nextEvent = event;
+                    break;
+                }
+            }
+
+            // Если сегодня нет, ищем завтра
+            if (!nextEvent) {
+                let nextDay = (currentDay + 1) % 7;
+                const tmrwEvents = scheduleData[nextDay] || [];
+                if(tmrwEvents.length > 0) {
+                    nextEvent = tmrwEvents[0];
+                    eventDate = new Date(now);
+                    eventDate.setDate(now.getDate() + 1);
+                }
+            }
+
+            if (nextEvent) {
+                document.getElementById('next-event-title').innerHTML = `${nextEvent.icon ? `<i class="fa-solid ${nextEvent.icon} mr-1"></i>` : ''}${nextEvent.name}`;
+                
+                // Расчет обратного отсчета
+                const [evtH, evtM] = nextEvent.time.split(':').map(Number);
+                const targetTime = new Date(eventDate);
+                targetTime.setHours(evtH, evtM, 0, 0);
+
+                const diffMs = targetTime - now;
+                if(diffMs > 0) {
+                    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+                    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    document.getElementById('countdown-timer').textContent = 
+                        `${String(diffHrs).padStart(2, '0')}:${String(diffMins).padStart(2, '0')}`;
+                    document.getElementById('next-event-time').textContent = `Сегодня в ${nextEvent.time}`;
+                    if(eventDate.getDate() !== now.getDate()) {
+                         document.getElementById('next-event-time').textContent = `Завтра в ${nextEvent.time}`;
+                    }
+                } else {
+                    document.getElementById('countdown-timer').textContent = "00:00";
+                }
+            } else {
+                document.getElementById('next-event-title').textContent = "Свободный день";
+                document.getElementById('countdown-timer').textContent = "--:--";
+                document.getElementById('next-event-time').textContent = "Отдыхай!";
+            }
+        }
+
+        // --- РЕНДЕР РАСПИСАНИЯ ---
+        function renderSchedule() {
+            const container = document.getElementById('schedule-container');
+            container.innerHTML = '';
+            
+            const currentDayNum = new Date().getDay();
+            const currentMins = new Date().getHours() * 60 + new Date().getMinutes();
+
+            // Отображаем с понедельника (1) по воскресенье (0)
+            const order = [1, 2, 3, 4, 5, 6, 0];
+            
+            order.forEach(dayIndex => {
+                const dayEvents = scheduleData[dayIndex];
+                if (!dayEvents) return;
+
+                const isToday = dayIndex === currentDayNum;
+                
+                let dayHtml = `
+                    <div class="mb-6">
+                        <h3 class="text-lg font-bold mb-3 flex items-center gap-2 ${isToday ? 'text-blue-400' : ''}">
+                            ${dayNames[dayIndex]} ${isToday ? '<span class="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">Сегодня</span>' : ''}
+                        </h3>
+                        <div class="glass glass-panel p-4">
+                `;
+
+                dayEvents.forEach(evt => {
+                    const evtMins = timeToMinutes(evt.time);
+                    let stateClass = '';
+                    if (isToday) {
+                        if (currentMins > evtMins + 45) stateClass = 'past'; // Прошло (условно урок 45м)
+                        else if (currentMins >= evtMins && currentMins <= evtMins + 45) stateClass = 'now'; // Идет сейчас
+                    }
+
+                    const highlightStyle = evt.highlight ? 'color: var(--accent); font-weight: bold;' : '';
+                    
+                    dayHtml += `
+                        <div class="timeline-item ${stateClass}">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-sm font-mono opacity-80">${evt.time}</span>
+                                    <h4 class="font-medium text-base leading-tight mt-0.5" style="${highlightStyle}">
+                                        ${evt.icon ? `<i class="fa-solid ${evt.icon} mr-1 text-sm"></i>` : ''}${evt.name}
+                                    </h4>
+                                    <p class="text-xs opacity-60 mt-1"><i class="fa-solid fa-location-dot mr-1"></i>${evt.location}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                dayHtml += `</div></div>`;
+                container.insertAdjacentHTML('beforeend', dayHtml);
+            });
+        }
+
+        // --- QUICK ADD (ЦЕНТР УПРАВЛЕНИЯ) ---
+        function submitQuickAdd() {
+            const input = document.getElementById('quick-input');
+            const val = input.value.trim();
+            if(val) {
+                // В реальном приложении здесь был бы API запрос
+                const toast = document.getElementById('toast');
+                toast.classList.add('show');
+                input.value = '';
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        // --- ГАЛЕРЕЯ (ВЫСОКОЕ РАЗРЕШЕНИЕ) ---
+        const gallerySources = {
+            arch: [
+                "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800",
+                "https://images.unsplash.com/photo-1511818966892-d7d671e672a2?q=80&w=800",
+                "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=800",
+                "https://images.unsplash.com/photo-1487958449943-2429e8be8625?q=80&w=800",
+                "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=800",
+                "https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=800"
+            ],
+            space: [
+                "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=800",
+                "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800",
+                "https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?q=80&w=800",
+                "https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=800",
+                "https://images.unsplash.com/photo-1536697246787-1f27d39f4a7c?q=80&w=800"
+            ],
+            art: [
+                "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=800",
+                "https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=800",
+                "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=800",
+                "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?q=80&w=800",
+                "https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=800"
+            ]
+        };
+
+        function loadGallery(category) {
+            const grid = document.getElementById('gallery-grid');
+            grid.innerHTML = '';
+            
+            const images = gallerySources[category] || gallerySources['arch'];
+            
+            images.forEach((src, index) => {
+                // Добавляем задержку для эффекта появления
+                setTimeout(() => {
+                    const highResSrc = src.replace('w=800', 'w=2500'); // Ссылка для обоев
+                    const itemHtml = `
+                        <div class="masonry-item glass p-1 shadow-md" style="animation: fadeIn 0.5s ease forwards;">
+                            <img src="${src}" alt="Gallery Image" loading="lazy">
+                            <button onclick="setCustomWallpaper('${highResSrc}')" class="set-wallpaper-btn">
+                                <i class="fa-solid fa-expand mr-1"></i> На обои
+                            </button>
+                        </div>
+                    `;
+                    grid.insertAdjacentHTML('beforeend', itemHtml);
+                }, index * 100);
+            });
+        }
+
+        // --- ТЕМЫ ---
+        function setTheme(themeName) {
+            document.body.setAttribute('data-theme', themeName);
+            // Сбрасываем кастомные обои при смене темы
+            document.body.style.backgroundImage = '';
+            localStorage.setItem('omniTheme', themeName);
+        }
+
+        function setCustomWallpaper(url) {
+            document.body.style.backgroundImage = `url('${url}')`;
+            
+            // Показываем уведомление
+            const toast = document.getElementById('toast');
+            toast.innerHTML = '<i class="fa-solid fa-image mr-2"></i> Обои установлены';
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Отправлено в раздел'; // Возвращаем текст по умолчанию
+            }, 3000);
+        }
+
+        // --- ИНИЦИАЛИЗАЦИЯ ---
+        function init() {
+            // Загрузка темы из памяти
+            const savedTheme = localStorage.getItem('omniTheme');
+            if(savedTheme) {
+                setTheme(savedTheme);
+            }
+
+            // Запуск часов
+            updateClock();
+            setInterval(updateClock, 1000); // Обновление каждую секунду для таймера
+            
+            // Предотвращение скролла всей страницы (оставляем только внутри секций)
+            document.body.addEventListener('touchmove', function(e) {
+                if(e.target.closest('.view-section')) return;
+                e.preventDefault();
+            }, { passive: false });
+        }
+
+        // Запуск при загрузке
+        window.onload = init;
+
+    </script>
+</body>
+</html>
